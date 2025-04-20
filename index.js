@@ -8,7 +8,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.SECRET_KEY || 'changeme';
 
-// Middleware: check for secret key in header
+// Middleware: Check for x-api-key
 app.use((req, res, next) => {
   const clientKey = req.headers['x-api-key'];
   if (clientKey !== SECRET_KEY) {
@@ -17,15 +17,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// POST /meili-task – Receives tasks from agents
+// Health check
+app.get('/', (req, res) => {
+  res.send('🧠 Meili is alive.');
+});
+
+// POST /meili-task – Accepts tasks from other agents
 app.post('/meili-task', (req, res) => {
   const { taskName, agent, content } = req.body;
-  console.log('✅ New task received:', { taskName, agent, content });
-  // Here you can add to a queue or store in Airtable
+  console.log('✅ Task received:', { taskName, agent, content });
+  // Optionally: store this in Airtable or log it to a task queue
   res.json({ status: 'Task received' });
 });
 
-// POST /dispatch – Tries to POST data to a destination
+// POST /dispatch – Sends payload to external service (e.g., Airtable, Zapier)
 app.post('/dispatch', async (req, res) => {
   const { destinationUrl, payload } = req.body;
 
@@ -36,19 +41,17 @@ app.post('/dispatch', async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
-    console.log('✅ Dispatched:', result.data);
+    console.log('✅ Dispatched to:', destinationUrl);
+    console.log('🌐 Response:', result.data);
     res.json({ status: 'Dispatched', response: result.data });
   } catch (err) {
-    console.error('❌ Dispatch failed:', err.message);
-    res.status(500).json({ error: 'Dispatch failed', details: err.message });
+    const errorDetails = err.response?.data || err.message;
+    console.error('❌ Dispatch failed:', errorDetails);
+    res.status(500).json({
+      error: 'Dispatch failed',
+      details: errorDetails
+    });
   }
-});
-
-
-
-// Health check route
-app.get('/', (req, res) => {
-  res.send('🧠 Meili is alive.');
 });
 
 app.listen(PORT, () => {
