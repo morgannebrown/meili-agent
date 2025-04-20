@@ -30,7 +30,11 @@ app.post('/dispatch', async (req, res) => {
   const { destinationUrl, payload } = req.body;
 
   try {
-    const result = await axios.post(destinationUrl, payload);
+    const result = await axios.post(destinationUrl, payload, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
     console.log('✅ Dispatched:', result.data);
     res.json({ status: 'Dispatched', response: result.data });
   } catch (err) {
@@ -38,6 +42,7 @@ app.post('/dispatch', async (req, res) => {
     res.status(500).json({ error: 'Dispatch failed' });
   }
 });
+
 
 // Health check route
 app.get('/', (req, res) => {
