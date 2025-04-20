@@ -32,6 +32,7 @@ app.post('/dispatch', async (req, res) => {
   try {
     const result = await axios.post(destinationUrl, payload, {
       headers: {
+        'Authorization': `Bearer ${process.env.AIRTABLE_PAT}`,
         'Content-Type': 'application/json'
       }
     });
@@ -39,9 +40,10 @@ app.post('/dispatch', async (req, res) => {
     res.json({ status: 'Dispatched', response: result.data });
   } catch (err) {
     console.error('❌ Dispatch failed:', err.message);
-    res.status(500).json({ error: 'Dispatch failed' });
+    res.status(500).json({ error: 'Dispatch failed', details: err.message });
   }
 });
+
 
 
 // Health check route
